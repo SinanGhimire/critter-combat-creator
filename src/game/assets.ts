@@ -8,6 +8,7 @@ import {
 } from "./critters";
 import { ENEMY_ART, ENEMY_FRAMES } from "./enemy-art";
 import { TURRET_SRC } from "./turret-art";
+import { HERO_FRAMES } from "./hero-anchors";
 
 
 
