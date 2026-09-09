@@ -1,0 +1,49 @@
+{
+  "name": "Echo Vanguards",
+  "short_name": "Echo Vanguards",
+  "description": "Survive endless zombie waves. Your gun auto-tracks up close — hold fire to aim yourself for +35% damage. Past runs return as Echoes to fight beside you.",
+  "start_url": "/",
+  "display": "standalone",
+  "orientation": "any",
+  "background_color": "#0a0812",
+  "theme_color": "#1a1428",
+  "categories": ["games", "entertainment"],
+  "lang": "en",
+  "dir": "ltr",
+  "scope": "/",
+  "prefer_related_applications": false,
+  "icons": [
+    {
+      "src": "/app-icon.png",
+      "sizes": "512x512",
+      "type": "image/png",
+      "purpose": "any"
+    },
+    {
+      "src": "/app-icon.png",
+      "sizes": "512x512",
+      "type": "image/png",
+      "purpose": "maskable"
+    },
+    {
+      "src": "/favicon.png",
+      "sizes": "192x192",
+      "type": "image/png",
+      "purpose": "any"
+    }
+  ],
+  "screenshots": [],
+  "related_applications": [],
+  "shortcuts": [
+    {
+      "name": "Play Survival",
+      "url": "/?mode=survival",
+      "description": "Start a Survival run"
+    },
+    {
+      "name": "Play Endless",
+      "url": "/?mode=endless",
+      "description": "Start an Endless run"
+    }
+  ]
+}
