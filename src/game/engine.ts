@@ -11,6 +11,8 @@ import { ITEM_MAP, itemPrice, rollItems } from "./shop-items";
 import { CLASSES, classForSkin, type ClassKey } from "./classes";
 import { drawWorn, warmAccessories } from "./accessory-images";
 import { NO_BONUS, type MetaBonus } from "./progression";
+import { TURRET_BY_TIER, TURRET_FRAMES } from "./turret-art";
+import { HERO_ANIM_SCALE } from "./hero-anchors";
 import type {
   Bullet,
   Mods,
