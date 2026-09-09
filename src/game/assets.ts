@@ -190,9 +190,16 @@ async function loadAnims(
   };
 }
 
-/** The vector hero pack ships a 6-frame idle, 8-frame walk and 5-frame death. */
-// Idle artwork is a single frame; walk and death are sprite strips.
-const PLAYER_FRAMES: [number, number, number] = [1, 8, 5];
+/**
+ * The vector hero pack ships a 6-frame breathing idle, an 8-frame walk cycle
+ * and a 10-frame death tumble. Every frame is real artwork — nothing is held
+ * or duplicated any more.
+ */
+const PLAYER_FRAMES: [number, number, number] = [
+  HERO_FRAMES.idle,
+  HERO_FRAMES.walk,
+  HERO_FRAMES.death,
+];
 
 let cache: Sprites | null = null;
 let inflight: Promise<Sprites> | null = null;
