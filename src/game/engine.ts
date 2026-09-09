@@ -692,6 +692,13 @@ function rollSlotOffers(s: GameState): WeaponKey[] {
 
 /** Freeze the fight and open the armoury between waves. */
 export function openShop(s: GameState) {
+  // Surviving a wave is the main payday: materials scale hard with the wave,
+  // plus a chunk of XP and a patch-up so the next wave starts on the front foot.
+  const bonus = Math.round(40 + s.wave * 22 + Math.max(0, s.wave - 10) * 18);
+  s.materials += bonus;
+  s.clearBonus = bonus;
+  grantXp(s, Math.round(18 + s.wave * 9));
+  s.player.hp = Math.min(s.player.maxHp, s.player.hp + Math.round(s.player.maxHp * 0.15));
   s.phase = "shop";
   s.shopRerolls = 0;
   s.shopOffers = rollSlotOffers(s);
@@ -1321,18 +1328,21 @@ export function createState(
   mods.lifesteal += def.lifesteal + META.lifesteal;
 
   const startTurrets: Turret[] = [];
+  const startChassis = TURRET_BY_TIER[def.turretTier] ?? TURRET_BY_TIER[1]!;
   for (let i = 0; i < def.turrets; i++) {
     const a = (i / Math.max(1, def.turrets)) * Math.PI * 2;
     startTurrets.push({
       x: Math.cos(a) * 90,
       y: Math.sin(a) * 90,
-      hp: 60,
-      maxHp: 60,
+      hp: startChassis.hp,
+      maxHp: startChassis.hp,
       life: Number.POSITIVE_INFINITY,
       aim: a,
       cd: 0,
       muzzle: 0,
-      weapon: WEAPONS[def.turretWeapon] ? def.turretWeapon : "pistol",
+      anim: 0,
+      tier: startChassis.tier,
+      weapon: WEAPONS[def.turretWeapon] ? def.turretWeapon : startChassis.weapon,
       kind: "turret",
     });
   }
@@ -1464,19 +1474,29 @@ export function speciesWeight(k: Species, wave: number): number {
 let speciesBag: Species[] = [];
 let bagWave = -1;
 
+function shuffle<T>(a: T[]): T[] {
+  for (let i = a.length - 1; i > 0; i--) {
+    const j = Math.floor(Math.random() * (i + 1));
+    const tmp = a[i]!;
+    a[i] = a[j]!;
+    a[j] = tmp;
+  }
+  return a;
+}
+
 function refillBag(wave: number) {
   bagWave = wave;
-  speciesBag = [];
-  for (const k of speciesPool(wave)) {
-    const n = Math.max(1, Math.round(speciesWeight(k, wave) * 2));
-    for (let i = 0; i < n; i++) speciesBag.push(k);
+  const pool = speciesPool(wave);
+  // Guarantee block first: every unlocked creature is drawn once before the
+  // weighted remainder starts repeating, so no wave is ever two mobs on loop.
+  const guaranteed = shuffle([...pool]);
+  const weighted: Species[] = [];
+  for (const k of pool) {
+    const n = Math.max(0, Math.round(speciesWeight(k, wave) * 2) - 1);
+    for (let i = 0; i < n; i++) weighted.push(k);
   }
-  for (let i = speciesBag.length - 1; i > 0; i--) {
-    const j = Math.floor(Math.random() * (i + 1));
-    const tmp = speciesBag[i]!;
-    speciesBag[i] = speciesBag[j]!;
-    speciesBag[j] = tmp;
-  }
+  // pop() reads from the end, so the guaranteed block goes last in the array.
+  speciesBag = [...shuffle(weighted), ...guaranteed];
 }
 
 function chooseSpecies(wave: number): Species {
@@ -1999,12 +2019,38 @@ function fire(
 
 /* --------------------------------- turrets --------------------------------- */
 
+/** Drop a bought turret chassis into the arena next to the player. */
+export function deployTurret(s: GameState, tier: number) {
+  const chassis = TURRET_BY_TIER[tier] ?? TURRET_BY_TIER[1]!;
+  const a = Math.random() * Math.PI * 2;
+  s.turrets.push({
+    x: s.player.x + Math.cos(a) * 96,
+    y: s.player.y + Math.sin(a) * 96,
+    hp: chassis.hp,
+    maxHp: chassis.hp,
+    life: Number.POSITIVE_INFINITY,
+    aim: a,
+    cd: 0,
+    muzzle: 0,
+    anim: 0,
+    tier: chassis.tier,
+    weapon: chassis.weapon,
+    kind: "turret",
+  });
+}
+
 function updateTurrets(s: GameState, dt: number) {
   const p = s.player;
   for (let i = s.turrets.length - 1; i >= 0; i--) {
     const t = s.turrets[i]!;
     t.life -= dt;
     if (t.muzzle > 0) t.muzzle -= dt;
+    // 15-frame shoot cycle: once a shot starts it plays right through, then
+    // the turret settles back on its resting frame.
+    if ((t.anim ?? 0) > 0) {
+      t.anim = (t.anim ?? 0) + dt * 1.7;
+      if (t.anim >= 0.62) t.anim = 0;
+    }
     if (t.life <= 0 || t.hp <= 0) {
       burst(s, t.x, t.y - 10, 10, "#9fd8ff", 200);
       s.turrets.splice(i, 1);
@@ -2051,9 +2097,21 @@ function updateTurrets(s: GameState, dt: number) {
     t.aim += da * Math.min(1, dt * 9);
     if (Math.abs(da) < 0.25 && t.cd <= 0) {
       const w = WEAPONS[t.weapon];
-      t.cd = Math.max(0.12, w.rate * 1.5);
+      const chassis = TURRET_BY_TIER[t.tier ?? 1];
+      t.cd = Math.max(0.1, (w.rate * 1.5) / (chassis?.rate ?? 1));
       t.muzzle = 0.07;
-      fire(s, t.x, t.y - 24, t.aim, t.weapon, p.damageMult * 0.55, true, p.mods, 1);
+      t.anim = 0.0001;
+      fire(
+        s,
+        t.x,
+        t.y - 24,
+        t.aim,
+        t.weapon,
+        p.damageMult * (chassis?.power ?? 0.55),
+        true,
+        p.mods,
+        1,
+      );
     }
   }
 }
