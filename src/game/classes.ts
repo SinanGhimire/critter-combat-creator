@@ -62,6 +62,8 @@ export interface ClassDef {
   turrets: number;
   /** Turret weapon when turrets > 0. */
   turretWeapon: WeaponKey;
+  /** Which turret chassis (1-5) the class deploys. */
+  turretTier: number;
   /** Extra crit chance added on top of base 5%. */
   crit: number;
   /** Lifesteal added on top of base 0. */
@@ -98,6 +100,7 @@ type Row = {
   mats?: number;
   turrets?: number;
   turretWeapon?: WeaponKey;
+  turretTier?: number;
   color: string;
   shirt: string;
   wear: AccessoryId[];
@@ -136,10 +139,14 @@ const ROWS: Row[] = [
     crit: 0.05,
     speedMult: 1.08,
     mats: 20,
+    turrets: 1,
+    turretWeapon: "smg",
+    turretTier: 1,
     color: "#7bf2a8",
     shirt: "#8a5a30",
     wear: ["scrapCap"],
     buffs: [
+      { label: "Turret", value: "Scrap Mk I", tone: "good" },
       { label: "Speed", value: "+8%", tone: "good" },
       { label: "Crit", value: "+5%", tone: "good" },
       { label: "Materials", value: "+20", tone: "good" },
@@ -271,10 +278,14 @@ const ROWS: Row[] = [
     speed: 240,
     hpMult: 1.35,
     speedMult: 0.9,
+    turrets: 1,
+    turretWeapon: "carbine",
+    turretTier: 3,
     color: "#9fd8e8",
     shirt: "#3f5fc0",
     wear: ["sentinelBowler"],
     buffs: [
+      { label: "Turret", value: "Bulwark Mk III", tone: "good" },
       { label: "HP", value: "+35%", tone: "good" },
       { label: "Speed", value: "-10%", tone: "bad" },
     ],
@@ -309,10 +320,14 @@ const ROWS: Row[] = [
     speed: 268,
     crit: 0.16,
     damageMult: 1.18,
+    turrets: 1,
+    turretWeapon: "sniper",
+    turretTier: 2,
     color: "#bfe8a8",
     shirt: "#8a5a30",
     wear: ["trapperHat"],
     buffs: [
+      { label: "Turret", value: "Snare Mk II", tone: "good" },
       { label: "Crit", value: "+16%", tone: "good" },
       { label: "Damage", value: "+18%", tone: "good" },
     ],
@@ -382,10 +397,14 @@ const ROWS: Row[] = [
     speed: 262,
     hpMult: 1.2,
     damageMult: 1.08,
+    turrets: 1,
+    turretWeapon: "grenadier",
+    turretTier: 4,
     color: "#7dbd63",
     shirt: "#4f7d3f",
     wear: ["wardenHat"],
     buffs: [
+      { label: "Turret", value: "Grove Mk IV", tone: "good" },
       { label: "HP", value: "+20%", tone: "good" },
       { label: "Damage", value: "+8%", tone: "good" },
     ],
@@ -472,14 +491,16 @@ const ROWS: Row[] = [
     weapon: "minigun",
     hp: 106,
     speed: 262,
-    turrets: 2,
+    turrets: 3,
     turretWeapon: "rifle",
+    turretTier: 5,
     mats: 25,
     color: "#e8a726",
     shirt: "#5a6470",
     wear: ["machinistCap"],
     buffs: [
-      { label: "Turrets", value: "+2", tone: "good" },
+      { label: "Turrets", value: "+3", tone: "good" },
+      { label: "Turret", value: "Warlord Mk V", tone: "good" },
       { label: "Materials", value: "+25", tone: "good" },
     ],
   },
@@ -703,6 +724,7 @@ const ROWS: Row[] = [
     mats: 30,
     turrets: 2,
     turretWeapon: "carbine",
+    turretTier: 3,
     color: "#8fd47a",
     shirt: "#4a5544",
     wear: ["sapperCap"],
@@ -747,6 +769,7 @@ function build(r: Row): ClassDef {
     damage: r.damageMult ?? 1,
     turrets: r.turrets ?? 0,
     turretWeapon: r.turretWeapon ?? "pistol",
+    turretTier: r.turretTier ?? 1,
     crit: r.crit ?? 0,
     lifesteal: r.lifesteal ?? 0,
     hpMult: r.hpMult ?? 1,
